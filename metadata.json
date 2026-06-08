@@ -1,0 +1,6 @@
+{
+  "name": "Swara Academy",
+  "description": "Swara Academy - A stunning, interactive pre-primary school website with standard interactive 3D physics play, an Admin dashboard, and Swara AI support.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
