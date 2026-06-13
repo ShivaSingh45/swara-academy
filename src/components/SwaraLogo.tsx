@@ -7,14 +7,16 @@ interface SwaraLogoProps {
   interactive?: boolean;
 }
 
-export default function SwaraLogo({ className = "", size = 120, interactive = true }: SwaraLogoProps) {
+export default function SwaraLogo({ className = "", size, interactive = true }: SwaraLogoProps) {
   // A majestic, highly detailed, and formal reproduction of the Swara Academy logo using responsive SVG vector lines
   // Embellished with premium gold leaf metallic frames, deep royal hues, and realistic lighting overlays.
   
+  const sizeStyle = size ? { width: size, height: size } : {};
+
   return (
     <motion.div 
       className={`relative inline-flex items-center justify-center transition-all ${className}`}
-      style={{ width: size, height: size }}
+      style={sizeStyle}
       whileHover={interactive ? { 
         scale: 1.08, 
         rotate: 3,

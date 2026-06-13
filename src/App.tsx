@@ -66,6 +66,10 @@ export interface AdmissionApplication {
   submittedAt: string;
   status: "Pending" | "Approved" | "Rejected";
   remarks?: string;
+  comments?: string;
+  applicationType?: "academic" | "daycare";
+  daycarePickupTime?: string;
+  daycarePackage?: string;
 }
 
 export default function App() {
@@ -87,6 +91,9 @@ export default function App() {
   // Accordion active FAQ state
   const [openFaqId, setOpenFaqId] = useState<string | null>("faq-1");
 
+  // Apply Form Type selector: "academic" | "daycare"
+  const [applyFormType, setApplyFormType] = useState<"academic" | "daycare">("academic");
+
   // Parent application submission form keys
   const [formData, setFormData] = useState({
     studentName: "",
@@ -97,7 +104,9 @@ export default function App() {
     phone: "",
     email: "",
     address: "",
-    comments: ""
+    comments: "",
+    daycarePickupTime: "07:00 PM",
+    daycarePackage: "Till 7:00 PM"
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submittedAppId, setSubmittedAppId] = useState("");
@@ -105,6 +114,7 @@ export default function App() {
   // Admin and filter states
   const [applications, setApplications] = useState<AdmissionApplication[]>([]);
   const [appFilter, setAppFilter] = useState<string>("All");
+  const [admTypeFilter, setAdmTypeFilter] = useState<"all" | "academic" | "daycare">("all");
 
   // Admin lock security
   const [adminPassword, setAdminPassword] = useState("");
@@ -145,7 +155,9 @@ export default function App() {
           address: "Station Road, near Nehru Crossing, Basti, UP",
           submittedAt: "2026-06-05 10:24",
           status: "Pending",
-          remarks: "Awaiting initial sibling verification code."
+          remarks: "Awaiting initial sibling verification code.",
+          comments: "Awaiting initial sibling verification code.",
+          applicationType: "academic"
         },
         {
           id: "SW-2026-5801",
@@ -159,7 +171,27 @@ export default function App() {
           address: "Railway Colony, Ward 4, Basti, UP",
           submittedAt: "2026-06-06 14:15",
           status: "Approved",
-          remarks: "Birth certificate authenticated successfully by office registrars."
+          remarks: "Birth certificate authenticated successfully by office registrars.",
+          comments: "Birth certificate authenticated successfully by office registrars.",
+          applicationType: "academic"
+        },
+        {
+          id: "DC-2026-9204",
+          studentName: "Karan Johar",
+          studentDob: "2021-11-05",
+          gender: "Male",
+          grade: "Day Care",
+          parentName: "Sameer Johar",
+          phone: "+91 95456 71822",
+          email: "sameer.johar@yahoo.com",
+          address: "Housing Board Colony, Basti, UP",
+          submittedAt: "2026-06-09 17:30",
+          status: "Pending",
+          remarks: "Day Care required till 6:30 PM. Needs evening milk cup.",
+          comments: "Day Care required till 6:30 PM. Needs evening milk cup.",
+          applicationType: "daycare",
+          daycarePickupTime: "06:30 PM",
+          daycarePackage: "Till 7:00 PM"
         }
       ];
       setApplications(seedApps);
@@ -228,20 +260,27 @@ export default function App() {
       alert("Kindly fill out all necessary fields (*) properly to submit.");
       return;
     }
-    const appId = `SW-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    const appId = applyFormType === "daycare" 
+      ? `DC-2026-${Math.floor(1000 + Math.random() * 9000)}`
+      : `SW-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+
     const newApp: AdmissionApplication = {
       id: appId,
       studentName: formData.studentName,
       studentDob: formData.studentDob || new Date().toISOString().substring(0, 10),
       gender: formData.gender,
-      grade: formData.grade,
+      grade: applyFormType === "daycare" ? "Day Care" : formData.grade,
       parentName: formData.parentName,
       phone: formData.phone,
       email: formData.email || "not-provided@example.com",
       address: formData.address,
       submittedAt: new Date().toISOString().replace('T', ' ').substring(0, 16),
       status: "Pending",
-      remarks: formData.comments ? `Parent Comments: ${formData.comments}` : "Awaiting review."
+      remarks: formData.comments ? `Comments: ${formData.comments}` : "Awaiting review.",
+      comments: formData.comments || "",
+      applicationType: applyFormType,
+      daycarePickupTime: applyFormType === "daycare" ? formData.daycarePickupTime : undefined,
+      daycarePackage: applyFormType === "daycare" ? formData.daycarePackage : undefined
     };
 
     const updated = [newApp, ...applications];
@@ -263,7 +302,9 @@ export default function App() {
       phone: "",
       email: "",
       address: "",
-      comments: ""
+      comments: "",
+      daycarePickupTime: "07:00 PM",
+      daycarePackage: "Till 7:00 PM"
     });
     setIsSubmitted(false);
     setSubmittedAppId("");
@@ -704,30 +745,29 @@ export default function App() {
       )}
 
       {/* SWARA ACADEMY FLOATING UTILITY HEADER BAR */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b-4 border-slate-900 px-4 py-3 md:py-4 select-none">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b-4 border-slate-900 px-3 py-2 sm:px-4 sm:py-3 select-none">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
           
           {/* Logo Brand aligned horizontally */}
-          <a href="#" className="flex items-center gap-5 group py-1">
+          <a href="#" className="flex items-center gap-2 sm:gap-4 group py-1 min-w-0">
             {data.logoImg ? (
               <img 
                 src={data.logoImg} 
                 alt="School Logo" 
-                className="h-24 md:h-32 lg:h-36 w-auto object-contain transition-transform duration-300 group-hover:scale-105 flex-shrink-0 select-none" 
+                className="h-12 w-auto sm:h-16 md:h-20 lg:h-24 object-contain transition-transform duration-300 group-hover:scale-105 flex-shrink-0 select-none" 
                 referrerPolicy="no-referrer" 
               />
             ) : (
               <SwaraLogo 
-                size={120} 
-                className="transition-transform duration-300 group-hover:scale-105 flex-shrink-0" 
+                className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 transition-transform duration-300 group-hover:scale-105 flex-shrink-0" 
                 interactive={false} 
               />
             )}
-            <div className="space-y-1.5 md:space-y-2">
-              <h1 className="text-2xl md:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 leading-none group-hover:text-rose-600 transition-colors uppercase">
+            <div className="space-y-0.5 sm:space-y-1.5 min-w-0">
+              <h1 className="text-sm sm:text-lg md:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 leading-none group-hover:text-rose-600 transition-colors uppercase truncate">
                 {data.name}
               </h1>
-              <span className="text-xs md:text-sm font-black uppercase text-rose-500 tracking-widest block leading-tight">
+              <span className="text-[9px] sm:text-[11px] md:text-xs font-black uppercase text-rose-500 tracking-wider block leading-tight truncate">
                 {data.logoDescription}
               </span>
             </div>
@@ -804,7 +844,7 @@ export default function App() {
           </nav>
 
           {/* Header Action Elements */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             <button 
               onClick={() => {
                 if (activeTab === "parents") {
@@ -813,14 +853,19 @@ export default function App() {
                   setActiveTab("parents");
                 }
               }}
-              className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl border-3 border-slate-900 text-xs font-black uppercase tracking-wide transition-all shadow-md hover:-translate-y-0.5 active:translate-y-0 ${
+              className={`flex items-center gap-1 px-2.5 py-2 sm:px-3.5 sm:py-2.5 rounded-xl sm:rounded-2xl border-2 sm:border-3 border-slate-900 text-[10px] sm:text-xs font-black uppercase tracking-wide transition-all shadow-md hover:-translate-y-0.5 active:translate-y-0 cursor-pointer ${
                 activeTab === "admin" 
                   ? 'bg-yellow-400 text-slate-950' 
                   : 'bg-slate-900 text-white hover:bg-slate-800'
               }`}
             >
-              <Settings size={15} className={activeTab === "admin" ? "animate-spin" : ""} />
-              {activeTab === "parents" ? "Principal Portal" : "Parents Desk"}
+              <Settings size={13} className={activeTab === "admin" ? "animate-spin" : ""} />
+              <span className="hidden sm:inline">
+                {activeTab === "parents" ? "Principal Portal" : "Parents Desk"}
+              </span>
+              <span className="sm:hidden">
+                {activeTab === "parents" ? "Portal" : "Desk"}
+              </span>
             </button>
             
             {/* Small Quick Admission Trigger button */}
@@ -831,7 +876,7 @@ export default function App() {
                   setParentsView("apply");
                   window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
-                className="hidden sm:inline-flex bg-lime-500 hover:bg-lime-600 text-slate-950 px-4 py-2.5 rounded-2xl border-3 border-slate-900 text-xs font-black uppercase tracking-wider hover:-translate-y-0.5 active:translate-y-0 transition-transform shadow-md"
+                className="hidden md:inline-flex bg-lime-500 hover:bg-lime-600 text-slate-950 px-4 py-2.5 rounded-2xl border-3 border-slate-900 text-xs font-black uppercase tracking-wider hover:-translate-y-0.5 active:translate-y-0 transition-transform shadow-md cursor-pointer"
               >
                 APPLY 2026-27
               </button>
@@ -839,6 +884,88 @@ export default function App() {
           </div>
         </div>
       </header>
+
+      {/* MOBILE HORIZONTAL NAVIGATION STRIP */}
+      <div className="lg:hidden sticky top-[68px] sm:top-[80px] z-30 bg-slate-100 border-b-2 border-slate-900 px-2 py-1.5 overflow-x-auto scrollbar-none flex items-center gap-2 whitespace-nowrap scroll-smooth select-none">
+        <button 
+          onClick={() => {
+            setActiveTab("parents");
+            setParentsView("home");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          className={`px-3 py-1 text-[11px] font-black uppercase rounded-lg border transition-all cursor-pointer ${
+            activeTab === "parents" && parentsView === "home" 
+              ? 'bg-slate-900 text-white border-slate-900' 
+              : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+          }`}
+        >
+          School Home
+        </button>
+        <button 
+          onClick={() => {
+            setActiveTab("parents");
+            setParentsView("gallery");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          className={`px-3 py-1 text-[11px] font-black uppercase rounded-lg border transition-all cursor-pointer ${
+            activeTab === "parents" && parentsView === "gallery" 
+              ? 'bg-amber-500 text-white border-amber-500' 
+              : 'bg-white text-slate-705 border-slate-300 hover:bg-slate-50'
+          }`}
+        >
+          🎬 Media Hub
+        </button>
+        <button 
+          onClick={() => {
+            setActiveTab("parents");
+            setParentsView("apply");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          className={`px-3 py-1 text-[11px] font-black uppercase rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+            activeTab === "parents" && parentsView === "apply" 
+              ? 'bg-blue-600 text-white border-blue-600' 
+              : 'bg-white text-slate-707 border-slate-300 hover:bg-slate-50'
+          }`}
+        >
+          <Sparkles size={8} className="fill-white text-white" /> Apply Online
+        </button>
+        <button 
+          onClick={(e) => handleNavClick("circulars", e)}
+          className="px-3 py-1 text-[11px] font-black uppercase rounded-lg bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+        >
+          Notice Board
+        </button>
+        <button 
+          onClick={(e) => handleNavClick("calendars", e)}
+          className="px-3 py-1 text-[11px] font-black uppercase rounded-lg bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+        >
+          Events
+        </button>
+        <button 
+          onClick={(e) => handleNavClick("innovations", e)}
+          className="px-3 py-1 text-[11px] font-black uppercase rounded-lg bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+        >
+          Classes
+        </button>
+        <button 
+          onClick={(e) => handleNavClick("leadership", e)}
+          className="px-3 py-1 text-[11px] font-black uppercase rounded-lg bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+        >
+          Philosophies
+        </button>
+        <button 
+          onClick={(e) => handleNavClick("playground", e)}
+          className="px-3 py-1 text-[11px] font-black uppercase rounded-lg bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+        >
+          3D Play
+        </button>
+        <button 
+          onClick={(e) => handleNavClick("contact", e)}
+          className="px-3 py-1 text-[11px] font-black uppercase rounded-lg bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 cursor-pointer"
+        >
+          Location
+        </button>
+      </div>
 
       {/* RENDER DYNAMIC ADMISSIONS QUICK BANNER OVER MAIN SECTION IF HIDDEN IN SCROLL */}
       {data.admissionBanner.show && (
@@ -911,6 +1038,40 @@ export default function App() {
               <div className="py-10 px-4 max-w-3xl mx-auto">
                 <div className="bg-white border-4 border-slate-900 rounded-3xl p-6 md:p-8 shadow-2xl relative">
                   
+                  {/* Separate Form Type Selection Segmented Bar */}
+                  {!isSubmitted && (
+                    <div className="mb-8 p-1.5 bg-slate-100 border-3 border-slate-900 rounded-2xl flex select-none">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setApplyFormType("academic");
+                          setFormData(prev => ({ ...prev, grade: "Playgroup" }));
+                        }}
+                        className={`flex-1 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 ${
+                          applyFormType === "academic"
+                            ? "bg-slate-900 text-white shadow-md scale-102"
+                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
+                        }`}
+                      >
+                        🎒 Pre-School Admission
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setApplyFormType("daycare");
+                          setFormData(prev => ({ ...prev, grade: "Day Care" }));
+                        }}
+                        className={`flex-1 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 ${
+                          applyFormType === "daycare"
+                            ? "bg-slate-900 text-white shadow-md scale-102"
+                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
+                        }`}
+                      >
+                        🕒 Day Care Registration
+                      </button>
+                    </div>
+                  )}
+
                   {isSubmitted ? (
                     /* SUCCESS STATUS CARD WRAPPER */
                     <div className="text-center py-8 space-y-6 animate-in zoom-in-95 duration-300">
@@ -1015,19 +1176,47 @@ export default function App() {
                             </div>
                           </div>
 
-                          <div>
-                            <label className="block text-[11px] font-black uppercase text-slate-700 mb-1">Grade Level Applied *</label>
-                            <select 
-                              value={formData.grade}
-                              onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
-                              className="w-full bg-slate-50 border-2 border-slate-200 focus:border-slate-900 rounded-xl px-3.5 py-2.5 text-xs font-bold outline-none focus:bg-white cursor-pointer"
-                            >
-                              <option value="Playgroup">Playgroup Montessori (Ages 2-3)</option>
-                              <option value="Nursery">Nursery Logic (Ages 3-4)</option>
-                              <option value="Kindergarten-I">Kindergarten Prep-I (Ages 4-5)</option>
-                              <option value="Kindergarten-II">Kindergarten Prep-II (Ages 5-6)</option>
-                            </select>
-                          </div>
+                          {applyFormType === "academic" ? (
+                            <div>
+                              <label className="block text-[11px] font-black uppercase text-slate-700 mb-1">Grade Level Applied *</label>
+                              <select 
+                                value={formData.grade}
+                                onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
+                                className="w-full bg-slate-50 border-2 border-slate-200 focus:border-slate-900 rounded-xl px-3.5 py-2.5 text-xs font-bold outline-none focus:bg-white cursor-pointer"
+                              >
+                                <option value="Playgroup">Playgroup Montessori (Ages 2-3)</option>
+                                <option value="Nursery">Nursery Logic (Ages 3-4)</option>
+                                <option value="Kindergarten-I">Kindergarten Prep-I (Ages 4-5)</option>
+                                <option value="Kindergarten-II">Kindergarten Prep-II (Ages 5-6)</option>
+                              </select>
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div>
+                                <label className="block text-[11px] font-black uppercase text-slate-700 mb-1">Pickup Target Time *</label>
+                                <select 
+                                  value={formData.daycarePickupTime}
+                                  onChange={(e) => setFormData({ ...formData, daycarePickupTime: e.target.value })}
+                                  className="w-full bg-slate-50 border-2 border-slate-200 focus:border-slate-900 rounded-xl px-2 py-2.5 text-[11px] font-bold outline-none focus:bg-white cursor-pointer"
+                                >
+                                  <option value="05:00 PM">05:00 PM (Afternoon)</option>
+                                  <option value="06:00 PM">06:00 PM (Late commute)</option>
+                                  <option value="07:00 PM">07:00 PM (Max Extended)</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label className="block text-[11px] font-black uppercase text-slate-700 mb-1">Support Package *</label>
+                                <select 
+                                  value={formData.daycarePackage}
+                                  onChange={(e) => setFormData({ ...formData, daycarePackage: e.target.value })}
+                                  className="w-full bg-slate-50 border-2 border-slate-200 focus:border-slate-900 rounded-xl px-2 py-2.5 text-[11px] font-bold outline-none focus:bg-white cursor-pointer"
+                                >
+                                  <option value="Till 5:00 PM">Standard Pack (Till 5)</option>
+                                  <option value="Till 7:00 PM">Extended Pack (Till 7)</option>
+                                </select>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -1252,6 +1441,157 @@ export default function App() {
                   >
                     Play in Toy Box 🕹️
                   </button>
+                </div>
+              </div>
+            </section>
+
+            {/* SPECIAL CHILDCARE & EARLY FOUNDATIONS SPOTLIGHT */}
+            <section className="py-12 px-4 bg-amber-50/50 border-b-4 border-slate-900 select-none">
+              <div className="max-w-7xl mx-auto space-y-10">
+                {/* Header title */}
+                <div className="text-center space-y-3">
+                  <span className="bg-rose-100 text-rose-700 border border-rose-300 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest inline-block">
+                     ⭐ EXCLUSIVE PREMIUM PARENTS CARE HUB
+                  </span>
+                  <h3 className="text-2xl md:text-3xl lg:text-4xl font-black text-slate-950 tracking-tight uppercase leading-none">
+                    Nurturing Early Foundations
+                  </h3>
+                  <p className="text-xs md:text-sm text-slate-600 max-w-2xl mx-auto font-semibold">
+                    At Swara Academy, we offer world-class holistic programs tailored to modern working parents and tender little infants. Explore our specialized care setups designed to bring safe smiles and high-agility growth!
+                  </p>
+                </div>
+
+                {/* Grid container */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Card 1: Baby Crush (Baby Creche) Program */}
+                  <div className="bg-white border-4 border-slate-900 rounded-3xl p-6 md:p-8 shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] hover:-translate-y-1.5 hover:shadow-[12px_12px_0px_0px_rgba(15,23,42,1)] duration-300 transition-all flex flex-col justify-between gap-6 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-rose-500/5 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-rose-100 border-3 border-slate-900 flex items-center justify-center text-rose-600 font-bold text-xl shadow-xs">
+                          👶
+                        </div>
+                        <div>
+                          <span className="bg-rose-500 text-white text-[9px] font-black tracking-widest px-2 py-0.5 rounded-md uppercase">
+                            Admissions Open From 1.5 Years
+                          </span>
+                          <h4 className="text-xl md:text-2xl font-black text-slate-950 leading-tight uppercase mt-0.5">
+                            Baby Crush Program (Creche)
+                          </h4>
+                        </div>
+                      </div>
+
+                      <p className="text-xs md:text-sm text-slate-600 leading-relaxed font-sans font-medium">
+                        Introducing <strong className="text-slate-900">Baby Crush</strong>, our bespoke sanctuary for early childhood care. We welcome little darlings from <strong className="text-rose-600">1.5 years of age</strong> into a warm, sensory-rich environment with certified caretakers, gentle socialization steps, and daily interactive soft-play setups.
+                      </p>
+
+                      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-bold text-slate-700 font-sans pt-2">
+                        <li className="flex items-center gap-2">
+                          <span className="text-emerald-500 font-black">✔</span> 1.5+ Years Toddler Intake
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <span className="text-emerald-500 font-black">✔</span> Smart Soft-Turf Activity
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <span className="text-emerald-500 font-black">✔</span> Individual Care Nanny
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <span className="text-emerald-500 font-black">✔</span> Nest Live Care Updates
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-slate-100 pt-4 mt-2">
+                      <div className="text-[10px] text-slate-500 font-mono font-bold">
+                        ⏰ TIMING: 08:30 AM - DISPERSAL
+                      </div>
+                      <button 
+                        onClick={() => {
+                          setActiveTab("parents");
+                          setParentsView("apply");
+                          setApplyFormType("academic");
+                          setFormData(prev => ({ ...prev, grade: "Playgroup" }));
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        className="bg-rose-500 hover:bg-rose-605 text-white font-black text-[10px] tracking-wider uppercase px-4 py-2 rounded-xl border-2 border-slate-950 transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-sm"
+                      >
+                        Enquire Baby Seat 🍼
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Card 2: After-School Day Care till 7 PM */}
+                  <div className="bg-white border-4 border-slate-900 rounded-3xl p-6 md:p-8 shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] hover:-translate-y-1.5 hover:shadow-[12px_12px_0px_0px_rgba(15,23,42,1)] duration-300 transition-all flex flex-col justify-between gap-6 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-lime-500/5 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-lime-100 border-3 border-slate-900 flex items-center justify-center text-lime-600 font-bold text-xl shadow-xs">
+                          ⏰
+                        </div>
+                        <div>
+                          <span className="bg-lime-500 text-slate-950 text-[9px] font-black tracking-widest px-2 py-0.5 rounded-md uppercase">
+                            Extended Afternoon Support
+                          </span>
+                          <h4 className="text-xl md:text-2xl font-black text-slate-950 leading-tight uppercase mt-0.5">
+                            Elite After-School Day Care
+                          </h4>
+                        </div>
+                      </div>
+
+                      <p className="text-xs md:text-sm text-slate-600 leading-relaxed font-sans font-medium">
+                        Crafted specially to bring comfort to working parents. After general school hours, children transition seamlessly into our premium <strong className="text-slate-900">Day Care facility, active until 7:00 PM</strong>. Packed with physical nap pods, healthy snacks, monitored homework slots, and creative play tables.
+                      </p>
+
+                      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-bold text-slate-700 font-sans pt-2">
+                        <li className="flex items-center gap-2">
+                          <span className="text-emerald-500 font-black">✔</span> Active Until 7:00 PM
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <span className="text-emerald-500 font-black">✔</span> Creative Play Tables
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <span className="text-emerald-500 font-black">✔</span> Homework Assist & Mentorship
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <span className="text-emerald-500 font-black">✔</span> Monitored Healthy Snacks
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-slate-100 pt-4 mt-2">
+                      <div className="text-[10px] text-slate-500 font-mono font-bold">
+                        📍 VENUE: CAMPUS TOY ROOM
+                      </div>
+                      <button 
+                        onClick={() => {
+                          setActiveTab("parents");
+                          setParentsView("apply");
+                          setApplyFormType("daycare");
+                          setFormData(prev => ({ ...prev, grade: "Day Care" }));
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        className="bg-lime-500 hover:bg-lime-605 text-slate-950 font-black text-[10px] tracking-wider uppercase px-4 py-2 rounded-xl border-2 border-slate-950 transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-sm"
+                      >
+                        Book Day Care Slot 🧸
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Smart interactive floating labels for smooth visuals */}
+                <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-black uppercase text-slate-800 bg-white border-3 border-slate-900 rounded-2xl p-4 shadow-sm">
+                  <div className="flex items-center gap-1.5 px-3 py-1 bg-rose-50 border-2 border-rose-200 rounded-lg select-all">
+                    🌸 1.5 Years Toddler Intake
+                  </div>
+                  <div className="flex items-center gap-1.5 px-3 py-1 bg-lime-50 border-2 border-lime-200 rounded-lg select-all">
+                    🕒 Day Care till 7:00 PM
+                  </div>
+                  <div className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 border-2 border-blue-200 rounded-lg select-all">
+                    🛡️ Live Care Nest Updates
+                  </div>
+                  <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 border-2 border-amber-200 rounded-lg select-all">
+                    🏫 Certified Montessori Care
+                  </div>
                 </div>
               </div>
             </section>
@@ -3039,30 +3379,70 @@ export default function App() {
                   </div>
                 )}
 
-                {/* SUB TAB CONTENT: ADMISSION APPLICATIONS REGISTER */}
                 {adminTab === "applications" && (
                   <div className="space-y-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 font-sans">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 font-sans border-b border-slate-200 pb-4">
                       <div>
-                        <h3 className="text-sm font-black uppercase text-indigo-650 tracking-wider">Submitted Admission Applications Register</h3>
-                        <p className="text-xs text-slate-500 font-medium">Review and process parent submissions registered online via the Admission Form segment.</p>
+                        <h3 className="text-base font-black uppercase text-indigo-700 tracking-wider">Submitted Admission & Day Care Register</h3>
+                        <p className="text-xs text-slate-500 font-medium">Review and process parent submissions registered online via the interactive Pre-school or Day Care forms.</p>
+                      </div>
+                    </div>
+
+                    {/* Integrated Register Switchers and Grade Selectors */}
+                    <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-white border-3 border-slate-900 rounded-2xl p-4 shadow-sm select-none">
+                      {/* Segmented Application Type selector */}
+                      <div className="flex bg-slate-100 p-1 rounded-xl border-2 border-slate-900 overflow-hidden">
+                        {[
+                          { val: "all", label: "📋 All ({total})", color: "text-slate-950" },
+                          { val: "academic", label: "🎒 Pre-School ({academic})", color: "text-indigo-600" },
+                          { val: "daycare", label: "🕒 Day Care ({daycare})", color: "text-amber-600" }
+                        ].map(tab => {
+                          const totalCount = applications.length;
+                          const academicCount = applications.filter(a => a.grade !== "Day Care" && a.applicationType !== "daycare").length;
+                          const daycareCount = applications.filter(a => a.grade === "Day Care" || a.applicationType === "daycare").length;
+                          
+                          let labelText = tab.label
+                            .replace("{total}", String(totalCount))
+                            .replace("{academic}", String(academicCount))
+                            .replace("{daycare}", String(daycareCount));
+
+                          return (
+                            <button
+                              key={tab.val}
+                              type="button"
+                              onClick={() => {
+                                setAdmTypeFilter(tab.val as any);
+                                setAppFilter("All"); // Reset sub grade filter when switching lists
+                              }}
+                              className={`px-3.5 py-2 text-xs font-black uppercase tracking-wider transition-all duration-200 cursor-pointer rounded-lg ${
+                                admTypeFilter === tab.val
+                                  ? "bg-slate-900 text-white shadow-sm"
+                                  : `${tab.color} hover:bg-slate-200/50`
+                              }`}
+                            >
+                              {labelText}
+                            </button>
+                          );
+                        })}
                       </div>
 
-                      {/* Filter by Grade */}
-                      <div className="flex items-center gap-2">
-                        <label className="text-xs font-bold text-slate-600 uppercase">Class Filter:</label>
-                        <select
-                          value={appFilter}
-                          onChange={(e) => setAppFilter(e.target.value)}
-                          className="bg-slate-100 border-2 border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold outline-none focus:bg-white cursor-pointer"
-                        >
-                          <option value="All">All Grades ({applications.length})</option>
-                          <option value="Playgroup">Playgroup Montessori</option>
-                          <option value="Nursery">Nursery Logic</option>
-                          <option value="Kindergarten-I">Kindergarten Prep-I</option>
-                          <option value="Kindergarten-II">Kindergarten Prep-II</option>
-                        </select>
-                      </div>
+                      {/* Filter by Grade (Only applicable if daycare filter isn't active) */}
+                      {admTypeFilter !== "daycare" && (
+                        <div className="flex items-center gap-2">
+                          <label className="text-xs font-black text-slate-700 uppercase">Class Grade:</label>
+                          <select
+                            value={appFilter}
+                            onChange={(e) => setAppFilter(e.target.value)}
+                            className="bg-slate-100 border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:bg-white cursor-pointer"
+                          >
+                            <option value="All">All Grades ({applications.filter(a => a.grade !== "Day Care").length})</option>
+                            <option value="Playgroup">Playgroup Montessori</option>
+                            <option value="Nursery">Nursery Logic</option>
+                            <option value="Kindergarten-I">Kindergarten Prep-I</option>
+                            <option value="Kindergarten-II">Kindergarten Prep-II</option>
+                          </select>
+                        </div>
+                      )}
                     </div>
 
                     {/* Applications Table/List rendering */}
@@ -3074,99 +3454,177 @@ export default function App() {
                       </div>
                     ) : (
                       (() => {
-                        const filtered = applications.filter(a => appFilter === "All" || a.grade === appFilter);
+                        // Advanced dynamic double filter
+                        const filtered = applications.filter(a => {
+                          const isDayCareItem = a.grade === "Day Care" || a.applicationType === "daycare";
+                          
+                          // First apply layout partition filters
+                          if (admTypeFilter === "academic" && isDayCareItem) return false;
+                          if (admTypeFilter === "daycare" && !isDayCareItem) return false;
+                          
+                          // Super grade filter
+                          if (appFilter !== "All" && a.grade !== appFilter) return false;
+                          
+                          return true;
+                        });
+
                         if (filtered.length === 0) {
                           return (
-                            <div className="text-center py-8 bg-slate-50 rounded-2xl">
-                              <p className="text-xs font-semibold text-slate-500">No applications match the grade "{appFilter}".</p>
+                            <div className="text-center py-10 bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl">
+                              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">No submissions found matching selected filters.</p>
                             </div>
                           );
                         }
+
                         return (
-                          <div className="grid grid-cols-1 gap-4 font-sans">
-                            {filtered.map((app) => (
-                              <div key={app.id} className="bg-slate-50 border-3 border-slate-900 rounded-2xl p-5 shadow-xs flex flex-col md:flex-row justify-between gap-6 relative overflow-hidden">
-                                
-                                <div className="space-y-4 flex-grow">
-                                  {/* Header and Grade label */}
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="bg-slate-900 text-white font-mono text-[9px] px-2.5 py-1 rounded-md font-bold uppercase tracking-wider select-all">
-                                      ID: {app.id}
-                                    </span>
-                                    <span className="bg-indigo-100 text-indigo-850 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider">
-                                      Class: {app.grade}
-                                    </span>
-                                    <span className="bg-slate-200 text-slate-700 font-mono text-[9px] px-2.5 py-1 rounded-md font-bold">
-                                      Registered: {new Date(app.timestamp).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
-                                    </span>
+                          <div className="grid grid-cols-1 gap-5 font-sans">
+                            {filtered.map((app) => {
+                              const isDayCare = app.grade === "Day Care" || app.applicationType === "daycare";
+                              return (
+                                <div 
+                                  key={app.id} 
+                                  className={`border-3 border-slate-900 rounded-3xl p-5 md:p-6 shadow-[5px_5px_0px_0px_rgba(15,23,42,1)] duration-300 transition-all flex flex-col md:flex-row justify-between gap-6 relative overflow-hidden ${
+                                    isDayCare 
+                                      ? "bg-amber-50/40 hover:bg-amber-50/70" 
+                                      : "bg-white hover:bg-slate-50"
+                                  }`}
+                                >
+                                  {/* Color block category on left margin */}
+                                  <div className={`absolute left-0 top-0 bottom-0 w-2.5 ${isDayCare ? "bg-amber-400" : "bg-indigo-500"}`}></div>
+                                  
+                                  <div className="space-y-4 flex-grow pl-3">
+                                    {/* Header Info Banner & Pill Badges */}
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="bg-slate-900 text-white font-mono text-[9px] px-2.5 py-1 rounded-md font-bold uppercase tracking-wider select-all border border-slate-800">
+                                        ID: {app.id}
+                                      </span>
+                                      {isDayCare ? (
+                                        <span className="bg-amber-100 text-amber-900 border border-amber-300 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+                                          🕒 After-School Day Care
+                                        </span>
+                                      ) : (
+                                        <span className="bg-indigo-100 text-indigo-900 border border-indigo-250 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+                                          🎒 Academic Pre-School
+                                        </span>
+                                      )}
+                                      {!isDayCare && (
+                                        <span className="bg-slate-105 text-slate-800 border border-slate-200 px-2.5 py-1 rounded-md text-[9px] font-extrabold uppercase tracking-widest bg-slate-100">
+                                          Grade: {app.grade}
+                                        </span>
+                                      )}
+                                      <span className="bg-slate-50 text-slate-600 font-mono text-[9px] px-2.5 py-1 rounded-md font-semibold border border-slate-150">
+                                        Submitted: {app.submittedAt || "Just Now"}
+                                      </span>
+
+                                      {/* Status indicator badge */}
+                                      <span className={`text-[9.5px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded border ml-auto ${
+                                        app.status === "Approved" 
+                                          ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                          : app.status === "Rejected"
+                                          ? "bg-rose-105 text-rose-800 border-rose-300"
+                                          : "bg-amber-100 text-amber-800 border-amber-300 animate-pulse"
+                                      }`}>
+                                        ● {app.status}
+                                      </span>
+                                    </div>
+
+                                    {/* Particulars Grid layout */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-3.5 gap-x-5 text-xs">
+                                      <div>
+                                        <span className="text-[10px] font-black uppercase text-slate-400 block leading-tight">Student Name</span>
+                                        <strong className="text-slate-900 text-sm uppercase font-black">{app.studentName}</strong>
+                                      </div>
+                                      <div>
+                                        <span className="text-[10px] font-black uppercase text-slate-400 block leading-tight">Birthdate (D.O.B)</span>
+                                        <span className="font-bold text-slate-800">{app.studentDob}</span>
+                                      </div>
+                                      <div>
+                                        <span className="text-[10px] font-black uppercase text-slate-400 block leading-tight">Gender</span>
+                                        <span className="font-bold text-slate-800 uppercase">{app.gender}</span>
+                                      </div>
+
+                                      <div>
+                                        <span className="text-[10px] font-black uppercase text-slate-400 block leading-tight">Parent / Guardian</span>
+                                        <strong className="text-slate-900 font-bold">{app.parentName}</strong>
+                                      </div>
+                                      <div>
+                                        <span className="text-[10px] font-black uppercase text-slate-400 block leading-tight font-sans">Helpline Mobile Phone</span>
+                                        <a href={`tel:${app.phone}`} className="text-blue-600 underline font-black font-mono hover:text-blue-800">
+                                          {app.phone}
+                                        </a>
+                                      </div>
+                                      <div>
+                                        <span className="text-[10px] font-black uppercase text-slate-400 block leading-tight">Email Contact</span>
+                                        <span className="font-mono text-slate-650 font-bold text-slate-600">{app.email || "—"}</span>
+                                      </div>
+
+                                      {/* Day Care Specific Details */}
+                                      {isDayCare && (
+                                        <>
+                                          <div>
+                                            <span className="text-[10px] font-black uppercase text-amber-600 block leading-tight">🕖 Required Pickup Target</span>
+                                            <span className="font-extrabold text-amber-955 bg-amber-100/50 px-2 py-0.5 rounded-lg border border-amber-200 text-[11px] font-mono inline-block mt-0.5">
+                                              {app.daycarePickupTime || "07:00 PM"}
+                                            </span>
+                                          </div>
+                                          <div>
+                                            <span className="text-[10px] font-black uppercase text-amber-600 block leading-tight">📦 Support Package Offer</span>
+                                            <span className="font-extrabold text-amber-955 bg-amber-100/50 px-2 py-0.5 rounded-lg border border-amber-200 text-[11px] inline-block mt-0.5">
+                                              {app.daycarePackage || "Till 7:00 PM"}
+                                            </span>
+                                          </div>
+                                          <div>{/* Empty Grid Cell for spacing alignment */}</div>
+                                        </>
+                                      )}
+
+                                      <div className="sm:col-span-2">
+                                        <span className="text-[10px] font-black uppercase text-slate-400 block leading-tight">Registered Residential Address</span>
+                                        <span className="font-bold text-slate-700 leading-relaxed block">{app.address}</span>
+                                      </div>
+                                      <div>
+                                        <span className="text-[10px] font-black uppercase text-slate-400 block leading-tight">Developmental/Dietary Comments</span>
+                                        <span className="italic font-bold text-rose-500 leading-relaxed block">{app.comments || app.remarks || "—"}</span>
+                                      </div>
+                                    </div>
                                   </div>
 
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-3 gap-x-4 text-xs">
-                                    <div>
-                                      <span className="text-[10px] font-black uppercase text-slate-400 block leading-tight">Student Name</span>
-                                      <strong className="text-slate-900 text-sm uppercase">{app.studentName}</strong>
-                                    </div>
-                                    <div>
-                                      <span className="text-[10px] font-black uppercase text-slate-400 block leading-tight">Birthdate (D.O.B)</span>
-                                      <span className="font-semibold text-slate-800">{app.studentDob}</span>
-                                    </div>
-                                    <div>
-                                      <span className="text-[10px] font-black uppercase text-slate-400 block leading-tight">Gender</span>
-                                      <span className="font-semibold text-slate-800">{app.gender}</span>
-                                    </div>
-
-                                    <div>
-                                      <span className="text-[10px] font-black uppercase text-slate-400 block leading-tight">Parent / Guardian</span>
-                                      <strong className="text-slate-900 font-bold">{app.parentName}</strong>
-                                    </div>
-                                    <div>
-                                      <span className="text-[10px] font-black uppercase text-slate-400 block leading-tight">Helpline Mobile Phone</span>
-                                      <a href={`tel:${app.phone}`} className="text-blue-600 underline font-extrabold font-mono hover:text-blue-800">
-                                        {app.phone}
-                                      </a>
-                                    </div>
-                                    <div>
-                                      <span className="text-[10px] font-black uppercase text-slate-400 block leading-tight font-sans">Email Contact</span>
-                                      <span className="font-mono text-slate-600 font-bold">{app.email || "—"}</span>
-                                    </div>
-
-                                    <div className="sm:col-span-2">
-                                      <span className="text-[10px] font-black uppercase text-slate-400 block leading-tight">Registered Residential Address</span>
-                                      <span className="font-medium text-slate-700">{app.address}</span>
-                                    </div>
-                                    <div>
-                                      <span className="text-[10px] font-black uppercase text-slate-400 block leading-tight">Development Dietary Comment</span>
-                                      <span className="italic font-bold text-rose-500">{app.comments || "—"}</span>
-                                    </div>
+                                  {/* Right side operational controls */}
+                                  <div className="border-t-2 md:border-t-0 md:border-l-2 border-slate-200 pt-4 md:pt-0 md:pl-6 flex flex-row md:flex-col justify-end md:justify-center gap-2 flex-shrink-0 min-w-[160px] select-none text-center">
+                                    <button 
+                                      onClick={() => {
+                                        // Update state status
+                                        const updatedList = applications.map(item => 
+                                          item.id === app.id ? { ...item, status: "Approved" as const } : item
+                                        );
+                                        setApplications(updatedList);
+                                        localStorage.setItem("swara_admissions_applications", JSON.stringify(updatedList));
+                                        
+                                        alert(isDayCare 
+                                          ? `Confirmed Day Care Spot for ${app.studentName}! Admission slot locked until 7 PM. Telephone notifications assigned.` 
+                                          : `Ticket scheduled for ${app.studentName}. Play Interaction tests locked for Admission Code: ${app.id}.`
+                                        );
+                                      }}
+                                      className="flex-grow bg-lime-400 hover:bg-lime-500 text-slate-950 px-3 py-2.5 rounded-xl text-[10px] font-black uppercase border-2 border-slate-950 transition-all active:scale-95 cursor-pointer"
+                                    >
+                                      {isDayCare ? "Confirm Day Care 🧸" : "Approve Test Ticket ✔"}
+                                    </button>
+                                    <button 
+                                      onClick={() => {
+                                        if (confirm(`Are you sure you want to permanently discard candidate application ${app.studentName}?`)) {
+                                          const list = applications.filter(item => item.id !== app.id);
+                                          setApplications(list);
+                                          localStorage.setItem("swara_admissions_applications", JSON.stringify(list));
+                                        }
+                                      }}
+                                      className="bg-rose-100 hover:bg-rose-200 text-rose-700 px-3 py-2 rounded-xl text-[10px] font-black uppercase border border-rose-200 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                                    >
+                                      <Trash2 size={12} /> Discard Application
+                                    </button>
                                   </div>
-                                </div>
 
-                                {/* Right quick action sidebar menu */}
-                                <div className="border-t-2 md:border-t-0 md:border-l-2 border-slate-200 pt-4 md:pt-0 md:pl-6 flex flex-row md:flex-col justify-end md:justify-center gap-2 flex-shrink-0 min-w-[150px]">
-                                  <button 
-                                    onClick={() => {
-                                      alert(`Approval ticket sent to scheduling queue for ${app.studentName}. Code assigned: ${app.id}. Telephone notifications will occur shortly!`);
-                                    }}
-                                    className="flex-grow bg-lime-505 hover:bg-lime-600 text-slate-950 px-3 py-2 rounded-xl text-[10px] font-black uppercase border-2 border-slate-900 transition-transform active:translate-y-0 bg-lime-400 cursor-pointer text-center"
-                                  >
-                                    Approve Test Ticket ✔
-                                  </button>
-                                  <button 
-                                    onClick={() => {
-                                      if (confirm(`Are you sure you want to permanently discard candidate application ${app.studentName}?`)) {
-                                        const list = applications.filter(item => item.id !== app.id);
-                                        setApplications(list);
-                                        localStorage.setItem("swara_admissions_applications", JSON.stringify(list));
-                                      }
-                                    }}
-                                    className="bg-rose-100 hover:bg-rose-200 text-rose-700 px-3 py-2 rounded-xl text-[10px] font-black uppercase border border-rose-200 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                                  >
-                                    <Trash2 size={12} /> Discard Application
-                                  </button>
                                 </div>
-
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         );
                       })()
@@ -3189,23 +3647,22 @@ export default function App() {
             
             {/* Column 1: School credentials description list */}
             <div className="lg:col-span-4 space-y-4">
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4">
                 {data.logoImg ? (
                   <img 
                     src={data.logoImg} 
                     alt="School Logo" 
-                    className="h-24 md:h-28 lg:h-32 w-auto object-contain flex-shrink-0 select-none" 
+                    className="h-20 w-auto sm:h-24 md:h-28 lg:h-32 object-contain flex-shrink-0 select-none" 
                     referrerPolicy="no-referrer" 
                   />
                 ) : (
                   <SwaraLogo 
-                    size={100} 
+                    className="w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0" 
                     interactive={false} 
-                    className="flex-shrink-0" 
                   />
                 )}
                 <div className="space-y-1.5 md:space-y-2">
-                  <h3 className="text-2xl md:text-3xl font-black text-white leading-none uppercase">{data.name}</h3>
+                  <h3 className="text-xl md:text-2xl lg:text-3xl font-black text-white leading-none uppercase">{data.name}</h3>
                   <span className="text-xs md:text-sm text-lime-400 font-mono tracking-widest block font-bold">{data.logoDescription}</span>
                 </div>
               </div>
@@ -3322,3 +3779,4 @@ export default function App() {
     </div>
   );
 }
+

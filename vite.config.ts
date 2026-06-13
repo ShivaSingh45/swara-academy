@@ -43,13 +43,30 @@ export default defineConfig(() => {
                   const systemInstruction = parsed.systemInstruction || 'You are helpful.';
                   const message = parsed.message || 'Hello';
 
-                  const response = await ai.models.generateContent({
-                    model: 'gemini-3.5-flash',
-                    contents: message,
-                    config: {
-                      systemInstruction
+                  // Implement self-healing failover mechanism for high availability
+                  const modelsToTry = ['gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-latest'];
+                  let response;
+                  let lastError = null;
+
+                  for (const model of modelsToTry) {
+                    try {
+                      response = await ai.models.generateContent({
+                        model,
+                        contents: message,
+                        config: {
+                          systemInstruction
+                        }
+                      });
+                      if (response) break;
+                    } catch (err: any) {
+                      console.warn(`Vite middleware model ${model} failed, attempting failover...`, err.message || err);
+                      lastError = err;
                     }
-                  });
+                  }
+
+                  if (!response) {
+                    throw lastError || new Error('All models in the failover pool are currently unavailable');
+                  }
 
                   res.writeHead(200, { 'Content-Type': 'application/json' });
                   res.end(JSON.stringify({ text: response.text || 'No response from Swara AI.' }));
